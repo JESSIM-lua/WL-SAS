@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 88 101 242;
+  --primary-dark: 71 82 196;
+  --secondary: 47 49 54;
+  --accent: 237 66 69;
+  --success: 87 242 135;
+  --warning: 254 231 92;
+  --error: 237 66 69;
+  --background: 54 57 63;
+  --background-light: 64 68 75;
+  --background-dark: 32 34 37;
+  --text: 220 221 222;
+  --text-muted: 163 166 170;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  @apply bg-background text-text;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded font-medium transition-colors duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary hover:bg-background-light text-text;
+  }
+  
+  .btn-danger {
+    @apply bg-error hover:opacity-90 text-white;
+  }
+  
+  .btn-success {
+    @apply bg-success hover:opacity-90 text-background-dark;
+  }
+  
+  .input {
+    @apply bg-background-light border border-background-light rounded px-3 py-2 text-text 
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200;
+  }
+  
+  .card {
+    @apply bg-background-light rounded-lg p-6 shadow-md;
+  }
+  
+  .form-group {
+    @apply flex flex-col gap-1 mb-4;
+  }
+  
+  .form-label {
+    @apply text-sm font-medium text-text;
+  }
+  
+  .error-text {
+    @apply text-sm text-error mt-1;
+  }
+}
