@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { submitApplication } from '../utils/api';
@@ -10,7 +10,25 @@ const ApplicationForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  
+  const [discordId, setDiscordId] = useState<string | null>(localStorage.getItem('discord_id'));
+
+useEffect(() => {
+  const storedId = localStorage.getItem('discord_id');
+  if (!storedId) {
+    window.location.href = '/user-login'; // redirige si pas connecté
+  } else {
+    setDiscordId(storedId);
+  }
+}, []);
+
+useEffect(() => {
+  const passed = localStorage.getItem('qcm_passed');
+  if (passed !== 'true') {
+    window.location.href = '/qcm';
+  }
+}, []);
+
+
   const {
     register,
     handleSubmit,
@@ -113,25 +131,24 @@ const ApplicationForm: React.FC = () => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="discordId" className="form-label">Discord ID</label>
-            <input
-              id="discordId"
-              type="text"
-              className="input"
-              placeholder="123456789012345678"
-              {...register('discordId', {
-                required: 'Discord ID is required',
-                pattern: {
-                  value: /^\d{17,19}$/,
-                  message: 'Please provide a valid Discord ID (17-19 digits)',
-                },
-              })}
-            />
-            <p className="text-xs text-text-muted mt-1">
-              To get your Discord ID, enable Developer Mode in Discord settings, then right-click your username and select "Copy ID"
-            </p>
-            {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
-          </div>
+  <label htmlFor="discordId" className="form-label">Discord ID</label>
+  <input
+    id="discordId"
+    type="text"
+    className="input"
+    placeholder="123456789012345678"
+    {...register('discordId', {
+      required: 'Discord ID is required',
+      pattern: {
+        value: /^\d{17,19}$/,
+        message: 'Please provide a valid Discord ID (17-19 digits)',
+      },
+    })}
+    value={discordId ?? ''}
+    readOnly
+  />
+  {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
+</div>
           
           <button
             type="submit"

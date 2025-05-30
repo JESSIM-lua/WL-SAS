@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { checkApplicationStatus } from '../utils/api';
@@ -13,7 +13,16 @@ const StatusChecker: React.FC = () => {
   const [status, setStatus] = useState<ApplicationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
+  const [discordId, setDiscordId] = useState<string | null>(localStorage.getItem('discord_id'));
   
+  useEffect(() => {
+    const storedId = localStorage.getItem('discord_id');
+    if (!storedId) {
+      window.location.href = '/user-login'; // redirige si pas connecté
+    } else {
+      setDiscordId(storedId);
+    }
+  }, []);
   const {
     register,
     handleSubmit,
@@ -92,20 +101,21 @@ const StatusChecker: React.FC = () => {
         
         <div className="form-group">
           <label htmlFor="discordId" className="form-label">Discord ID</label>
-          <input
-            id="discordId"
-            type="text"
-            className="input"
-            placeholder="123456789012345678"
-            {...register('discordId', {
-              required: 'Discord ID is required',
-              pattern: {
-                value: /^\d{17,19}$/,
-                message: 'Please provide a valid Discord ID (17-19 digits)',
-              },
-            })}
-          />
-          {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
+  <input
+    id="discordId"
+    type="text"
+    className="input"
+    placeholder="123456789012345678"
+    {...register('discordId', {
+      required: 'Discord ID is required',
+      pattern: {
+        value: /^\d{17,19}$/,
+        message: 'Please provide a valid Discord ID (17-19 digits)',
+      },
+    })}
+    value={discordId ?? ''}
+    readOnly
+  />
         </div>
         
         <button

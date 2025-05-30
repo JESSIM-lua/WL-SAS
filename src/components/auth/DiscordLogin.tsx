@@ -3,9 +3,9 @@ import { LogIn } from 'lucide-react';
 
 const DiscordLogin: React.FC = () => {
   const handleLoginClick = () => {
-    // In a real application, this would redirect to Discord OAuth
-    window.location.href = '/api/auth/discord';
-  };
+  window.location.href = 'http://localhost:3001/api/auth/discord';
+};
+
 
   return (
     <div className="card max-w-md w-full mx-auto text-center animate-fade-in">

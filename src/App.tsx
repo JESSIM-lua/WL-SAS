@@ -5,6 +5,13 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
+import UserLogin from './pages/UserLogin';
+import { Application } from 'discord.js';
+import ApplicationForm from './components/ApplicationForm';
+import QcmPage from './pages/QcmPage';
+
+
+
 
 function App() {
   return (
@@ -16,6 +23,9 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/user-login" element={<UserLogin />} />
+              <Route path="/form" element={<ApplicationForm />} />
+              <Route path="/qcm" element={<QcmPage />} />
             </Routes>
           </main>
           <Footer />

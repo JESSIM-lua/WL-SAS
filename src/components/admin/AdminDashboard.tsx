@@ -4,8 +4,11 @@ import ApplicationsList from './ApplicationsList';
 
 const AdminDashboard: React.FC = () => {
   // In a real app, these would be fetched from the API
+  // total api : /total
+
+
   const stats = {
-    total: 24,
+    total: 36, // Example total applications
     pending: 8,
     approved: 12,
     rejected: 4

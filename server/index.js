@@ -8,6 +8,7 @@ import playerRoutes from './routes/playerRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import { connectToDatabase } from './config/db.js';
 
+import qcmRoutes from './routes/qcmRoutes.js';
 // Load environment variables
 dotenv.config();
 
@@ -17,9 +18,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/qcm', qcmRoutes);
 
 // Static files
 app.use(express.static(join(__dirname, '../dist')));

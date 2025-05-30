@@ -38,6 +38,17 @@ router.get('/status/:discordId', async (req, res) => {
   }
 });
 
+// Get Total Applications
+router.get('/total', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const total = await Player.count();
+    res.json({ success: true, total });
+  } catch (error) {
+    console.error('Error fetching total applications:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // Submit new application (public)
 router.post('/', async (req, res) => {
   try {
