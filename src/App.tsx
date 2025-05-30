@@ -14,6 +14,11 @@ import QcmPage from './pages/QcmPage';
 
 
 function App() {
+  // Vérification de la présence du token d'authentification
+  // const token = localStorage.getItem('auth_token');
+  // if (!token && window.location.pathname !== '/user-login') {
+  //   window.location.href = '/user-login';
+  // }
   return (
     <AuthProvider>
       <Router>

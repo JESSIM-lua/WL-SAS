@@ -1,4 +1,5 @@
 import { DataTypes } from 'sequelize';
+
 import sequelize from '../config/db.js'; // adapte ce chemin à ton projet
 
 const Question = sequelize.define('Question', {

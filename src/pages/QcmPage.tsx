@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthUser } from '../components/hooks/useAuth';
 
 interface Choice {
   label: string;
-  isCorrect?: boolean; // pas utilisé ici, juste pour le typage
+  isCorrect?: boolean;
 }
 
 interface Question {
@@ -19,68 +20,146 @@ interface Response {
 }
 
 const QcmPage: React.FC = () => {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [attempts, setAttempts] = useState<number>(0);
-  const [error, setError] = useState('');
+  const { userAcc } = useAuthUser();
   const navigate = useNavigate();
 
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [locked, setLocked] = useState(false);
+  const [remaining, setRemaining] = useState<number>(3);
+
+  // Vérifie si connecté
   useEffect(() => {
-    const loadQuestions = async () => {
-    const res = await fetch('http://localhost:3001/api/qcm/questions');
+    const token = localStorage.getItem('discord_id');
+    if (!token && window.location.pathname !== '/user-login') {
+      window.location.href = '/user-login';
+    }
+  }, []);
+
+  // Charge les questions
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/qcm/questions');
+        const data = await res.json();
+        setQuestions(data);
+      } catch {
+        setError("❌ Impossible de charger les questions.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
+// Vérifie les tentatives
+useEffect(() => {
+  const checkAttempts = async () => {
+    if (!discordId) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
       const data = await res.json();
-      setQuestions(data);
+
+      if (data.passed) {
+        // ✅ Rediriger directement
+        navigate('/form');
+        return;
+      }
+
+      if (data.attempts >= 3) {
+        setLocked(true);
+        setError('❌ Tu as atteint le nombre maximal de tentatives.');
+      } else {
+        setRemaining(3 - data.attempts);
+      }
+    } catch {
+      setError("❌ Erreur lors de la vérification des tentatives.");
+    }
+  };
+
+  checkAttempts();
+}, [navigate]);
+
+  const discordId = localStorage.getItem('discord_id');
+  // Vérifie les tentatives
+  useEffect(() => {
+    const checkAttempts = async () => {
+      if (!discordId) return;
+
+      try {
+        const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
+        const data = await res.json();
+
+        if (data.passed) {
+          navigate('/form');
+        } else if (data.attempts >= 3) {
+          setLocked(true);
+          setError('❌ Tu as atteint le nombre maximal de tentatives.');
+        } else {
+          setRemaining(3 - data.attempts);
+        }
+      } catch {
+        setError("❌ Erreur lors de la vérification des tentatives.");
+      }
     };
 
-    loadQuestions();
-
-    const attemptCount = parseInt(localStorage.getItem('qcm_attempts') || '0');
-    if (attemptCount >= 3) setError("Tu as atteint le nombre maximum d'essais.");
-    setAttempts(attemptCount);
-  }, []);
+    checkAttempts();
+  }, [userAcc, navigate]);
 
   const handleSelect = (questionId: number, label: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: label }));
   };
 
   const handleSubmit = async () => {
-    if (attempts >= 3) return;
+    setError('');
+console.log("Discord ID:", discordId);
+
+    if (!discordId) return;
+console.log("Discord ID:", discordId);
+
+    const allAnswered = questions.length > 0 && questions.every(q => answers[q.id]);
+    if (!allAnswered) {
+      setError("⚠️ Tu dois répondre à toutes les questions.");
+      return;
+    }
 
     const responses: Response[] = Object.entries(answers).map(([id, selectedLabel]) => ({
       questionId: parseInt(id),
       selectedLabel,
     }));
 
-    const res = await fetch('/api/qcm/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ responses }),
-    });
+    try {
+      const res = await fetch('http://localhost:3001/api/qcm/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discordId: discordId, responses }),
+      });
 
-    const result = await res.json();
-    const newAttempts = attempts + 1;
+      const result = await res.json();
 
-    localStorage.setItem('qcm_attempts', newAttempts.toString());
+      if (res.status === 403) {
+        setError(result.error || "❌ Nombre maximal de tentatives atteint.");
+        setLocked(true);
+        return;
+      }
 
-    if (result.passed) {
-      localStorage.setItem('qcm_passed', 'true');
-      navigate('/form');
-    } else {
-      setError(`Score insuffisant (${result.score}/20). Il te reste ${3 - newAttempts} essai(s).`);
-      setAttempts(newAttempts);
+      if (result.passed) {
+        navigate('/form');
+      } else {
+        const tentativesRestantes = 3 - result.attempts;
+        setRemaining(tentativesRestantes);
+        setError(`❌ Score insuffisant (${result.score}/20). Il te reste ${tentativesRestantes} essai(s).`);
+        if (tentativesRestantes <= 0) setLocked(true);
+      }
+    } catch {
+      setError("❌ Une erreur est survenue lors de la soumission.");
     }
   };
 
-  useEffect(() => {
-  const loadQuestions = async () => {
-    const res = await fetch('/api/qcm/questions');
-    const data = await res.json();
-    console.log("📦 Questions chargées :", data);
-    setQuestions(data);
-  };
-
-  loadQuestions();
-}, []);
+  if (loading) return <p className="text-center">Chargement...</p>;
 
   return (
     <div className="card max-w-3xl mx-auto p-6 space-y-6 animate-fade-in">
@@ -88,32 +167,39 @@ const QcmPage: React.FC = () => {
 
       {error && <div className="text-red-500 font-medium">{error}</div>}
 
-      {questions.map(q => (
-        <div key={q.id} className="space-y-2">
-          <p className="font-semibold">{q.question}</p>
-          {q.choices.map(choice => (
-            <label key={choice.label} className="block">
-              <input
-                type="radio"
-                name={`question-${q.id}`}
-                value={choice.label}
-                checked={answers[q.id] === choice.label}
-                onChange={() => handleSelect(q.id, choice.label)}
-                className="mr-2"
-              />
-              {choice.label}
-            </label>
+      {!locked && (
+        <>
+          {questions.map(q => (
+            <div key={q.id} className="space-y-2">
+              <p className="font-semibold">{q.question}</p>
+              {q.choices.map(choice => (
+                <label key={choice.label} className="block">
+                  <input
+                    type="radio"
+                    name={`question-${q.id}`}
+                    value={choice.label}
+                    checked={answers[q.id] === choice.label}
+                    onChange={() => handleSelect(q.id, choice.label)}
+                    className="mr-2"
+                  />
+                  {choice.label}
+                </label>
+              ))}
+            </div>
           ))}
-        </div>
-      ))}
 
-      <button
-        className="btn btn-primary w-full"
-        onClick={handleSubmit}
-        disabled={attempts >= 3}
-      >
-        Soumettre le QCM
-      </button>
+          <button
+            className="btn btn-primary w-full"
+            onClick={handleSubmit}
+          >
+            Soumettre le QCM
+          </button>
+
+          <p className="text-sm text-center text-gray-500">
+            Tentatives restantes : {remaining}
+          </p>
+        </>
+      )}
     </div>
   );
 };

@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, LogOut, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { set } from 'zod/v4';
+
 
 const Header: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated, user, isAdmin, logout } = useAuth();
   const [isConnected, setIsConnected] = React.useState(false);
-
+  const username = localStorage.getItem('username') || 'Guest';
   useEffect(() => {
     const checkConnection = () => {
       const discordId = localStorage.getItem('discord_id');
@@ -47,7 +47,7 @@ const disconnectUser = () => {
               <div className="flex items-center gap-2">
               <div className="flex items-center bg-background-light rounded-full px-3 py-1">
                   <User size={16} className="mr-2 text-primary" />
-                  <span className="text-sm">{user?.username || 'Admin'}</span>
+                  <span className="text-sm">{username || "-"}</span>
                   
                 </div>
                 <button

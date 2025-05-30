@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { submitApplication } from '../utils/api';
 import { Player } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 type FormData = Omit<Player, 'status' | 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -10,24 +11,48 @@ const ApplicationForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [discordId, setDiscordId] = useState<string | null>(localStorage.getItem('discord_id'));
+  const discordId = localStorage.getItem('discord_id');
+  const [locked, setLocked] = useState(false);
+    const [error, setError] = useState('');
+      const [remaining, setRemaining] = useState<number>(3);
+    
+  
 
-useEffect(() => {
-  const storedId = localStorage.getItem('discord_id');
-  if (!storedId) {
-    window.location.href = '/user-login'; // redirige si pas connecté
-  } else {
-    setDiscordId(storedId);
-  }
-}, []);
+  useEffect(() => {
+    if (!discordId) {
+      window.location.href = '/user-login';
+    }
+  }, [discordId]);
 
-useEffect(() => {
-  const passed = localStorage.getItem('qcm_passed');
-  if (passed !== 'true') {
-    window.location.href = '/qcm';
-  }
-}, []);
+  const navigate = useNavigate();
 
+ useEffect(() => {
+  const checkAttempts = async () => {
+    if (!discordId) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
+      const data = await res.json();
+
+      if (data.passed) {
+        localStorage.setItem('qcm_passed', 'true');
+        return;
+      }
+
+
+    } catch {
+      setError("❌ Erreur lors de la vérification des tentatives.");
+    }
+
+    const passedQCM = localStorage.getItem('qcm_passed')
+    if (passedQCM != 'true') {
+      navigate('/qcm');
+      return;
+    }
+  };
+
+  checkAttempts();
+}, [navigate]);
 
   const {
     register,
@@ -39,10 +64,10 @@ useEffect(() => {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     setSubmitStatus('idle');
-    
+
     try {
       const response = await submitApplication(data);
-      
+
       if (response.success) {
         setSubmitStatus('success');
         reset();
@@ -61,7 +86,7 @@ useEffect(() => {
   return (
     <div className="card animate-fade-in max-w-lg w-full mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center">Whitelist Application</h2>
-      
+
       {submitStatus === 'success' ? (
         <div className="bg-success/10 text-success p-4 rounded-md flex items-center gap-3 animate-fade-in">
           <CheckCircle size={20} />
@@ -75,7 +100,7 @@ useEffect(() => {
               <p>{errorMessage}</p>
             </div>
           )}
-          
+
           <div className="form-group">
             <label htmlFor="rpName" className="form-label">RP First Name</label>
             <input
@@ -93,7 +118,7 @@ useEffect(() => {
             />
             {errors.rpName && <p className="error-text">{errors.rpName.message}</p>}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="rpSurname" className="form-label">RP Last Name</label>
             <input
@@ -111,7 +136,7 @@ useEffect(() => {
             />
             {errors.rpSurname && <p className="error-text">{errors.rpSurname.message}</p>}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="backgroundLink" className="form-label">Background GDoc Link</label>
             <input
@@ -129,27 +154,27 @@ useEffect(() => {
             />
             {errors.backgroundLink && <p className="error-text">{errors.backgroundLink.message}</p>}
           </div>
-          
+
           <div className="form-group">
-  <label htmlFor="discordId" className="form-label">Discord ID</label>
-  <input
-    id="discordId"
-    type="text"
-    className="input"
-    placeholder="123456789012345678"
-    {...register('discordId', {
-      required: 'Discord ID is required',
-      pattern: {
-        value: /^\d{17,19}$/,
-        message: 'Please provide a valid Discord ID (17-19 digits)',
-      },
-    })}
-    value={discordId ?? ''}
-    readOnly
-  />
-  {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
-</div>
-          
+            <label htmlFor="discordId" className="form-label">Discord ID</label>
+            <input
+              id="discordId"
+              type="text"
+              className="input"
+              placeholder="123456789012345678"
+              {...register('discordId', {
+                required: 'Discord ID is required',
+                pattern: {
+                  value: /^\d{17,19}$/,
+                  message: 'Please provide a valid Discord ID (17-19 digits)',
+                },
+              })}
+              value={discordId ?? ''}
+              readOnly
+            />
+            {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
+          </div>
+
           <button
             type="submit"
             className="btn btn-primary w-full"
