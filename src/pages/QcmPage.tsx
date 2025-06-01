@@ -69,6 +69,15 @@ useEffect(() => {
         return;
       }
 
+      
+      if (data.passed) {
+        localStorage.setItem('qcm_passed', 'true');
+        return;
+      }
+
+
+    
+
       if (data.attempts >= 3) {
         setLocked(true);
         setError('❌ Tu as atteint le nombre maximal de tentatives.');
@@ -77,6 +86,13 @@ useEffect(() => {
       }
     } catch {
       setError("❌ Erreur lors de la vérification des tentatives.");
+    }
+
+
+    const passedQCM = localStorage.getItem('qcm_passed')
+    if (passedQCM != 'true') {
+      navigate('/qcm');
+      return;
     }
   };
 

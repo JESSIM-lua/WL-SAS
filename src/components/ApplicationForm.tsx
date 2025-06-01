@@ -36,7 +36,8 @@ const ApplicationForm: React.FC = () => {
 
       if (data.passed) {
         localStorage.setItem('qcm_passed', 'true');
-        return;
+      } else {
+        localStorage.setItem('qcm_passed', 'false');
       }
 
 

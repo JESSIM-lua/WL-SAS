@@ -23,7 +23,11 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
 app.use('/api/qcm', qcmRoutes);
+
+import inscriptionRoutes from './routes/inscriptionRoutes.js';
+app.use('/api/inscriptions', inscriptionRoutes);
 
 // Static files
 app.use(express.static(join(__dirname, '../dist')));

@@ -1,11 +1,66 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 import ApplicationForm from '../components/ApplicationForm';
 import StatusChecker from '../components/StatusChecker';
 import { Shield, FileCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'apply' | 'check'>('apply');
+  const discordId = localStorage.getItem('discord_id');
+
+
+  const [locked, setLocked] = useState(false);
+      const [error, setError] = useState('');
+        const [remaining, setRemaining] = useState<number>(3);
+
+        const navigate = useNavigate();
+
+  useEffect(() => {
+  const checkAttempts = async () => {
+    if (!discordId) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
+      const data = await res.json();
+
+      if (data.passed) {
+        // ✅ Rediriger directement
+        navigate('/form');
+        return;
+      }
+
+      
+      if (data.passed) {
+        localStorage.setItem('qcm_passed', 'true');
+        return;
+      } else {
+        localStorage.setItem('qcm_passed', 'false');
+      }
+
+
+    
+
+      if (data.attempts >= 3) {
+        setLocked(true);
+        setError('❌ Tu as atteint le nombre maximal de tentatives.');
+      } else {
+        setRemaining(3 - data.attempts);
+      }
+    } catch {
+      setError("❌ Erreur lors de la vérification des tentatives.");
+    }
+
+
+    const passedQCM = localStorage.getItem('qcm_passed')
+    if (passedQCM != 'true') {
+      navigate('/qcm');
+      return;
+    }
+  }
+  checkAttempts();
+  }
+, [discordId, navigate]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
