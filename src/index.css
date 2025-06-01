@@ -3,57 +3,60 @@
 @tailwind utilities;
 
 :root {
-  --primary: 88 101 242;
-  --primary-dark: 71 82 196;
-  --secondary: 47 49 54;
-  --accent: 237 66 69;
-  --success: 87 242 135;
-  --warning: 254 231 92;
-  --error: 237 66 69;
-  --background: 54 57 63;
-  --background-light: 64 68 75;
-  --background-dark: 32 34 37;
-  --text: 220 221 222;
-  --text-muted: 163 166 170;
+  --primary: 40 167 69;
+  --primary-dark: 33 136 56;
+  --secondary: 52 58 64;
+  --accent: 255 193 7;
+  --success: 40 167 69;
+  --warning: 255 193 7;
+  --error: 220 53 69;
+  --background: 248 249 250;
+  --background-light: 255 255 255;
+  --background-dark: 33 37 41;
+  --text: 33 37 41;
+  --text-muted: 108 117 125;
 }
 
 body {
   font-family: 'Inter', sans-serif;
   @apply bg-background text-text;
+  background-image: linear-gradient(to bottom right, rgba(40, 167, 69, 0.05), rgba(255, 193, 7, 0.05));
+  min-height: 100vh;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded font-medium transition-colors duration-200;
+    @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-sm;
   }
   
   .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white;
+    @apply bg-primary hover:bg-primary-dark text-white transform hover:translate-y-[-1px] hover:shadow-md;
   }
   
   .btn-secondary {
-    @apply bg-secondary hover:bg-background-light text-text;
+    @apply bg-secondary hover:bg-background-dark text-white transform hover:translate-y-[-1px];
   }
   
   .btn-danger {
-    @apply bg-error hover:opacity-90 text-white;
+    @apply bg-error hover:opacity-90 text-white transform hover:translate-y-[-1px];
   }
   
   .btn-success {
-    @apply bg-success hover:opacity-90 text-background-dark;
+    @apply bg-success hover:opacity-90 text-white transform hover:translate-y-[-1px];
   }
   
   .input {
-    @apply bg-background-light border border-background-light rounded px-3 py-2 text-text 
-    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200;
+    @apply bg-background-light border border-gray-200 rounded-lg px-4 py-2.5 text-text w-full
+    focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition duration-200
+    placeholder:text-gray-400;
   }
   
   .card {
-    @apply bg-background-light rounded-lg p-6 shadow-md;
+    @apply bg-background-light rounded-xl p-8 shadow-lg border border-gray-100;
   }
   
   .form-group {
-    @apply flex flex-col gap-1 mb-4;
+    @apply flex flex-col gap-2 mb-4;
   }
   
   .form-label {
@@ -63,4 +66,29 @@ body {
   .error-text {
     @apply text-sm text-error mt-1;
   }
+
+  .tabs-list {
+    @apply bg-background-light rounded-lg p-1 shadow-sm border border-gray-100;
+  }
+
+  .tabs-trigger {
+    @apply px-4 py-2.5 rounded-md transition-all duration-200;
+  }
+
+  .tabs-trigger[data-state="active"] {
+    @apply bg-primary text-white shadow-sm;
+  }
+
+  .tabs-trigger[data-state="inactive"] {
+    @apply text-text-muted hover:text-text hover:bg-gray-50;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
