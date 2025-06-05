@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
+import InscriptionParticipant from './InscriptionParticipant.js';
 
 const Inscription = sequelize.define('Inscription', {
   date: {
@@ -21,5 +22,7 @@ const Inscription = sequelize.define('Inscription', {
 }, {
   tableName: 'Inscriptions',
 });
+
+
 
 export default Inscription;

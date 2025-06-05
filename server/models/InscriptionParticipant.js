@@ -1,7 +1,13 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
+import Inscription from './Inscription.js'; // ✅ CORRECTION ICI
 
 const InscriptionParticipant = sequelize.define('InscriptionParticipant', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   discordId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -15,7 +21,7 @@ const InscriptionParticipant = sequelize.define('InscriptionParticipant', {
   indexes: [
     {
       unique: true,
-      fields: ['discordId', 'inscriptionId'], // empêche un joueur de s’inscrire deux fois à la même session
+      fields: ['discordId', 'inscriptionId'],
     },
   ],
 });
