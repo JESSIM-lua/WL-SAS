@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import playerRoutes from './routes/playerRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import { connectToDatabase } from './config/db.js';
+import './models/associations.js'; // <- ce fichier applique les relations
+
 
 import qcmRoutes from './routes/qcmRoutes.js';
 // Load environment variables
@@ -25,7 +27,6 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/qcm', qcmRoutes);
-
 import inscriptionRoutes from './routes/inscriptionRoutes.js';
 app.use('/api/inscriptions', inscriptionRoutes);
 
