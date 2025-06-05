@@ -1,11 +1,23 @@
+// server/models/index.js
 import Question from './Question.js';
-
-export { Question };
 import QcmAttempt from './QcmAttempt.js';
-export { QcmAttempt };
-
-
+import Inscription from './Inscription.js';
 import InscriptionParticipant from './InscriptionParticipant.js';
 
-Inscription.hasMany(InscriptionParticipant, { foreignKey: 'inscriptionId' });
-InscriptionParticipant.belongsTo(Inscription, { foreignKey: 'inscriptionId' });
+// Associer les modèles ici
+Inscription.hasMany(InscriptionParticipant, {
+  foreignKey: 'inscriptionId',
+  as: 'participants',
+});
+InscriptionParticipant.belongsTo(Inscription, {
+  foreignKey: 'inscriptionId',
+  as: 'inscription',
+});
+
+// Export centralisé
+export {
+  Question,
+  QcmAttempt,
+  Inscription,
+  InscriptionParticipant,
+};
