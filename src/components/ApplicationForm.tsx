@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { submitApplication } from '../utils/api';
+import { checkApplicationStatus, submitApplication } from '../utils/api';
 import { Player } from '../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -83,7 +83,25 @@ const ApplicationForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!discordId) return;
+      try {
+        const response = await checkApplicationStatus(discordId);
 
+        if (response.success && response.data) {
+          if (response.data.status === 'approved') {
+            navigate('/inscription');
+          }
+        } else {
+          setError(response.error || 'No application found with this Discord ID.');
+        }
+      } catch (error) {
+        setError('An unexpected error occurred. Please try again.');
+      }
+    };
+    checkStatus();
+  }, [discordId, navigate]);
   return (
     <div className="card animate-fade-in max-w-lg w-full mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center">Whitelist Application</h2>
