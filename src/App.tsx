@@ -9,6 +9,8 @@ import UserLogin from './pages/UserLogin';
 import { Application } from 'discord.js';
 import ApplicationForm from './components/ApplicationForm';
 import QcmPage from './pages/QcmPage';
+import InscriptionPage from './pages/InscriptionPage';
+import CreateInscriptionPage from './pages/CreateInscriptionPage';
 
 
 
@@ -31,6 +33,8 @@ function App() {
               <Route path="/user-login" element={<UserLogin />} />
               <Route path="/form" element={<ApplicationForm />} />
               <Route path="/qcm" element={<QcmPage />} />
+              <Route path='/inscription' element={<InscriptionPage />} />
+              <Route path='/admin/inscriptions' element={<CreateInscriptionPage/>} />
             </Routes>
           </main>
           <Footer />
