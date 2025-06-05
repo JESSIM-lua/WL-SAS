@@ -65,7 +65,7 @@ useEffect(() => {
 
       if (data.passed) {
         // ✅ Rediriger directement
-        navigate('/form');
+        navigate('/');
         return;
       }
 
@@ -110,7 +110,7 @@ useEffect(() => {
         const data = await res.json();
 
         if (data.passed) {
-          navigate('/form');
+          navigate('/');
         } else if (data.attempts >= 3) {
           setLocked(true);
           setError('❌ Tu as atteint le nombre maximal de tentatives.');
@@ -163,7 +163,7 @@ console.log("Discord ID:", discordId);
       }
 
       if (result.passed) {
-        navigate('/form');
+        navigate('/');
       } else {
         const tentativesRestantes = 3 - result.attempts;
         setRemaining(tentativesRestantes);

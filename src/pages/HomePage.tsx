@@ -26,7 +26,7 @@ const HomePage: React.FC = () => {
 
       if (data.passed) {
         // ✅ Rediriger directement
-        navigate('/form');
+        navigate('/');
         return;
       }
 
