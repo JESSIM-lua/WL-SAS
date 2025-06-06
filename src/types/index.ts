@@ -1,13 +1,17 @@
 export interface Player {
-  id?: number;
+  id: number;
   rpName: string;
   rpSurname: string;
-  backgroundLink: string;
   discordId: string;
-  status: ApplicationStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  backgroundLink: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  adminNote?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  reapplied?: boolean;
 }
+
 
 export interface Admin {
   id?: number;
