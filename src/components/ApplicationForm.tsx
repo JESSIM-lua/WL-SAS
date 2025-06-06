@@ -5,18 +5,20 @@ import { checkApplicationStatus, submitApplication } from '../utils/api';
 import { Player } from '../types';
 import { useNavigate } from 'react-router-dom';
 
-type FormData = Omit<Player, 'status' | 'id' | 'createdAt' | 'updatedAt'>;
+type FormData = Omit<Player, 'status' | 'id' | 'createdAt' | 'updatedAt' | 'rejectionReason' | 'reapplied'>;
 
 const ApplicationForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const discordId = localStorage.getItem('discord_id');
+  const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
-    const [error, setError] = useState('');
-      const [remaining, setRemaining] = useState<number>(3);
-    
-  
+  const [status, setStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [reapplied, setReapplied] = useState(false);
+
+  const discordId = localStorage.getItem('discord_id');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!discordId) {
@@ -24,36 +26,70 @@ const ApplicationForm: React.FC = () => {
     }
   }, [discordId]);
 
-  const navigate = useNavigate();
+  // Vérifie le QCM
+  useEffect(() => {
+    const checkAttempts = async () => {
+      if (!discordId) return;
 
- useEffect(() => {
-  const checkAttempts = async () => {
-    if (!discordId) return;
+      try {
+        const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
+        const data = await res.json();
 
-    try {
-      const res = await fetch(`http://localhost:3001/api/qcm/attempts/${discordId}`);
-      const data = await res.json();
-
-      if (data.passed) {
-        localStorage.setItem('qcm_passed', 'true');
-      } else {
-        localStorage.setItem('qcm_passed', 'false');
+        localStorage.setItem('qcm_passed', data.passed ? 'true' : 'false');
+      } catch {
+        setError("❌ Erreur lors de la vérification des tentatives.");
       }
 
+      const passedQCM = localStorage.getItem('qcm_passed');
+      if (passedQCM !== 'true') {
+        navigate('/qcm');
+      }
+    };
 
-    } catch {
-      setError("❌ Erreur lors de la vérification des tentatives.");
+    checkAttempts();
+  }, [navigate, discordId]);
+
+  // Vérifie le statut de la candidature
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!discordId) return;
+
+      try {
+        const response = await checkApplicationStatus(discordId);
+
+        if (response.success && response.data) {
+          const data = response.data;
+          setStatus(data.status);
+          setReapplied(data.reapplied ?? false);
+          setRejectionReason(data.rejectionReason || '');
+
+          if (data.status === 'approved') {
+            navigate('/inscription');
+          } else if (data.status === 'pending') {
+            setLocked(true);
+          } else if (data.status === 'rejected') {
+            if (data.reapplied) {
+              setLocked(true);
+            } else {
+              setLocked(false); // peut repostuler
+            }
+          }
+        } else {
+          setStatus('none'); // pas encore de candidature
+        }
+      } catch {
+        setStatus('none');
+      }
+    };
+
+    checkStatus();
+  }, [discordId, navigate]);
+
+  useEffect(() => {
+    if (status === 'approved') {
+      navigate('/inscription');
     }
-
-    const passedQCM = localStorage.getItem('qcm_passed')
-    if (passedQCM != 'true') {
-      navigate('/qcm');
-      return;
-    }
-  };
-
-  checkAttempts();
-}, [navigate]);
+  }, [status, navigate]);
 
   const {
     register,
@@ -72,46 +108,49 @@ const ApplicationForm: React.FC = () => {
       if (response.success) {
         setSubmitStatus('success');
         reset();
+        setLocked(true);
       } else {
         setSubmitStatus('error');
         setErrorMessage(response.error || 'An error occurred while submitting your application.');
       }
-    } catch (error) {
+    } catch {
       setSubmitStatus('error');
       setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
-  useEffect(() => {
-    const checkStatus = async () => {
-      if (!discordId) return;
-      try {
-        const response = await checkApplicationStatus(discordId);
 
-        if (response.success && response.data) {
-          if (response.data.status === 'approved') {
-            navigate('/inscription');
-          }
-        } else {
-          setError(response.error || 'No application found with this Discord ID.');
-        }
-      } catch (error) {
-        setError('An unexpected error occurred. Please try again.');
-      }
-    };
-    checkStatus();
-  }, [discordId, navigate]);
   return (
     <div className="card animate-fade-in max-w-lg w-full mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center">Whitelist Application</h2>
 
-      {submitStatus === 'success' ? (
+      {locked && (
+        <div className="bg-error/10 text-error p-4 rounded-md flex items-start gap-3 mb-4 animate-fade-in">
+          <AlertCircle size={20} />
+          <div>
+            {status === 'pending' && <p>⏳ Votre candidature est en attente de validation.</p>}
+            {status === 'approved' && <p>✅ Vous avez déjà été accepté. Redirection...</p>}
+            {status === 'rejected' && reapplied && (
+              <>
+                <p>❌ Votre candidature a été rejetée et vous avez déjà utilisé votre seconde chance.</p>
+                {rejectionReason && (
+                  <p className="italic text-sm mt-1">Motif : {rejectionReason}</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {submitStatus === 'success' && (
         <div className="bg-success/10 text-success p-4 rounded-md flex items-center gap-3 animate-fade-in">
           <CheckCircle size={20} />
           <p>Your application has been submitted successfully! We'll review it shortly.</p>
         </div>
-      ) : (
+      )}
+
+      {!locked && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {submitStatus === 'error' && (
             <div className="bg-error/10 text-error p-4 rounded-md flex items-center gap-3 animate-fade-in">
@@ -129,10 +168,7 @@ const ApplicationForm: React.FC = () => {
               placeholder="John"
               {...register('rpName', {
                 required: 'RP first name is required',
-                minLength: {
-                  value: 2,
-                  message: 'Name must be at least 2 characters',
-                },
+                minLength: { value: 2, message: 'Name must be at least 2 characters' },
               })}
             />
             {errors.rpName && <p className="error-text">{errors.rpName.message}</p>}
@@ -147,10 +183,7 @@ const ApplicationForm: React.FC = () => {
               placeholder="Doe"
               {...register('rpSurname', {
                 required: 'RP last name is required',
-                minLength: {
-                  value: 2,
-                  message: 'Last name must be at least 2 characters',
-                },
+                minLength: { value: 2, message: 'Last name must be at least 2 characters' },
               })}
             />
             {errors.rpSurname && <p className="error-text">{errors.rpSurname.message}</p>}
@@ -194,11 +227,7 @@ const ApplicationForm: React.FC = () => {
             {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-full"
-            disabled={isSubmitting}
-          >
+          <button type="submit" className="btn btn-primary w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 size={18} className="animate-spin mr-2" />
