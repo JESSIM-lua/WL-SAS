@@ -3,18 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --primary: 129 199 132;           /* Pastel Green */
-  --primary-dark: 56 142 60;        /* Darker Green */
-  --secondary: 207 216 220;         /* Pastel Gray */
-  --accent: 174 213 129;            /* Light Pastel Green */
-  --success: 102 187 106;           /* Soft Green */
-  --warning: 255 241 118;           /* Pastel Yellow */
-  --error: 239 83 80;               /* Soft Red */
-  --background: 33 37 41;           /* Dark Gray */
-  --background-light: 44 47 51;     /* Slightly Lighter Dark Gray */
-  --background-dark: 24 26 27;      /* Very Dark Gray */
-  --text: 236 239 241;              /* Light Gray */
-  --text-muted: 176 190 197;        /* Muted Gray */
+  --primary: 0 123 255;            /* Bleu principal harmonisé */
+  --primary-dark: 0 86 179;        /* Bleu foncé */
+  --secondary: 40 167 69;        /* Jaune harmonisé */
+  --secondary-dark: 40 167 69;    /* Jaune foncé */
+  --accent: 111 66 193;            /* Violet accent */
+  --success: 40 167 69;            /* Vert harmonisé */
+  --warning: 40 167 69;           /* Jaune clair */
+  --error: 220 53 69;              /* Rouge harmonisé */
+  --background: 248 249 250;       /* Gris très clair */
+  --background-light: 255 255 255; /* Blanc */
+  --background-dark: 33 37 41;     /* Gris foncé */
+  --text: 33 37 41;                /* Texte foncé */
+  --text-dark: 255 255 255;        /* Texte clair */
+  --text-muted: 108 117 125;       /* Gris atténué */
 }
 
 body {
