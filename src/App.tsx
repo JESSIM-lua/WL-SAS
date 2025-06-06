@@ -11,6 +11,7 @@ import ApplicationForm from './components/ApplicationForm';
 import QcmPage from './pages/QcmPage';
 import InscriptionPage from './pages/InscriptionPage';
 import CreateInscriptionPage from './pages/CreateInscriptionPage';
+import InscriptionsHistory from './pages/InscriptionsHistory';
 
 
 
@@ -35,6 +36,7 @@ function App() {
               <Route path="/qcm" element={<QcmPage />} />
               <Route path='/inscription' element={<InscriptionPage />} />
               <Route path='/admin/inscriptions' element={<CreateInscriptionPage/>} />
+              <Route path="/inscription/history" element={<InscriptionsHistory/>} />
             </Routes>
           </main>
           <Footer />
