@@ -11,18 +11,20 @@ type FormData = {
 const StatusChecker: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [status, setStatus] = useState<ApplicationStatus | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [discordId, setDiscordId] = useState<string | null>(localStorage.getItem('discord_id'));
-  
+
   useEffect(() => {
     const storedId = localStorage.getItem('discord_id');
     if (!storedId) {
-      window.location.href = '/user-login'; // redirige si pas connecté
+      window.location.href = '/user-login'; // Redirige si pas connecté
     } else {
       setDiscordId(storedId);
     }
   }, []);
+
   const {
     register,
     handleSubmit,
@@ -32,17 +34,18 @@ const StatusChecker: React.FC = () => {
   const onSubmit = async (data: FormData) => {
     setIsChecking(true);
     setError(null);
-    
+
     try {
       const response = await checkApplicationStatus(data.discordId);
-      
+
       if (response.success && response.data) {
         setStatus(response.data.status as ApplicationStatus);
+        setRejectionReason(response.data.rejectionReason || null);
         setHasChecked(true);
       } else {
         setError(response.error || 'No application found with this Discord ID.');
       }
-    } catch (error) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsChecking(false);
@@ -51,7 +54,7 @@ const StatusChecker: React.FC = () => {
 
   const renderStatusMessage = () => {
     if (!hasChecked) return null;
-    
+
     switch (status) {
       case ApplicationStatus.PENDING:
         return (
@@ -59,7 +62,9 @@ const StatusChecker: React.FC = () => {
             <Clock size={24} className="text-warning" />
             <div>
               <h3 className="font-medium">Application Pending</h3>
-              <p className="text-sm text-text-muted">Your application is still under review. Please check back later.</p>
+              <p className="text-sm text-text-muted">
+                Your application is still under review. Please check back later.
+              </p>
             </div>
           </div>
         );
@@ -69,17 +74,24 @@ const StatusChecker: React.FC = () => {
             <CheckCircle size={24} className="text-success" />
             <div>
               <h3 className="font-medium">Application Approved!</h3>
-              <p className="text-sm text-text-muted">Congratulations! Your Discord role has been assigned.</p>
+              <p className="text-sm text-text-muted">
+                Congratulations! Your Discord role has been assigned.
+              </p>
             </div>
           </div>
         );
       case ApplicationStatus.REJECTED:
         return (
-          <div className="bg-error/10 rounded-md p-4 flex items-center gap-3 animate-fade-in">
+          <div className="bg-error/10 rounded-md p-4 flex items-start gap-3 animate-fade-in">
             <XCircle size={24} className="text-error" />
             <div>
               <h3 className="font-medium">Application Rejected</h3>
-              <p className="text-sm text-text-muted">Unfortunately, your application was not approved. Please contact an admin for more details.</p>
+              <p className="text-sm text-text-muted">
+                Unfortunately, your application was not approved.
+              </p>
+              {rejectionReason && (
+                <p className="mt-2 italic text-sm text-red-600">Reason: {rejectionReason}</p>
+              )}
             </div>
           </div>
         );
@@ -91,38 +103,35 @@ const StatusChecker: React.FC = () => {
   return (
     <div className="card animate-fade-in max-w-lg w-full mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center">Check Application Status</h2>
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-4">
         {error && (
           <div className="bg-error/10 text-error p-4 rounded-md animate-fade-in">
             {error}
           </div>
         )}
-        
+
         <div className="form-group">
           <label htmlFor="discordId" className="form-label">Discord ID</label>
-  <input
-    id="discordId"
-    type="text"
-    className="input"
-    placeholder="123456789012345678"
-    {...register('discordId', {
-      required: 'Discord ID is required',
-      pattern: {
-        value: /^\d{17,19}$/,
-        message: 'Please provide a valid Discord ID (17-19 digits)',
-      },
-    })}
-    value={discordId ?? ''}
-    readOnly
-  />
+          <input
+            id="discordId"
+            type="text"
+            className="input"
+            placeholder="123456789012345678"
+            {...register('discordId', {
+              required: 'Discord ID is required',
+              pattern: {
+                value: /^\d{17,19}$/,
+                message: 'Please provide a valid Discord ID (17-19 digits)',
+              },
+            })}
+            value={discordId ?? ''}
+            readOnly
+          />
+          {errors.discordId && <p className="error-text">{errors.discordId.message}</p>}
         </div>
-        
-        <button
-          type="submit"
-          className="btn btn-primary w-full"
-          disabled={isChecking}
-        >
+
+        <button type="submit" className="btn btn-primary w-full" disabled={isChecking}>
           {isChecking ? (
             <>
               <Loader2 size={18} className="animate-spin mr-2" />
@@ -133,7 +142,7 @@ const StatusChecker: React.FC = () => {
           )}
         </button>
       </form>
-      
+
       {renderStatusMessage()}
     </div>
   );
