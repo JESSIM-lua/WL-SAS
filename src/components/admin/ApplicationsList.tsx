@@ -9,7 +9,10 @@ const ApplicationsList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [filter, setFilter] = useState<ApplicationStatus | 'all'>('all');
-  
+  const [showRejectForm, setShowRejectForm] = useState<Record<number, boolean>>({});
+  const [rejectionReasons, setRejectionReasons] = useState<Record<number, string>>({});
+  const [adminNotes, setAdminNotes] = useState<Record<number, string>>({});
+
   const fetchApplications = async () => {
     setLoading(true);
     try {
@@ -25,22 +28,28 @@ const ApplicationsList: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchApplications();
   }, []);
-  
+
   const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
     if (!id) return;
-    
     setActionLoading(id);
+
     try {
-      const response = await updateApplicationStatus(id, status);
+      const rejectionReason = status === 'rejected' ? (rejectionReasons[id] || 'Aucune raison spécifiée.') : undefined;
+      const adminNote = status === 'rejected' ? (adminNotes[id] || '') : undefined;
+
+      const response = await updateApplicationStatus(id, status, rejectionReason, adminNote);
+
       if (response.success && response.data) {
-        // Update the local state with the updated application
-        setApplications(applications.map(app => 
-          app.id === id ? { ...app, status: status as ApplicationStatus } : app
+        setApplications(applications.map(app =>
+          String(app.id) === String(id) ? { ...app, status, rejectionReason, adminNote } : app
         ));
+        setShowRejectForm(prev => ({ ...prev, [id]: false }));
+        setRejectionReasons(prev => ({ ...prev, [id]: '' }));
+        setAdminNotes(prev => ({ ...prev, [id]: '' }));
       } else {
         setError(response.error || `Failed to ${status} application`);
       }
@@ -50,11 +59,11 @@ const ApplicationsList: React.FC = () => {
       setActionLoading(null);
     }
   };
-  
-  const filteredApplications = applications.filter(app => 
+
+  const filteredApplications = applications.filter(app =>
     filter === 'all' || app.status === filter
   );
-  
+
   const getStatusBadge = (status: ApplicationStatus) => {
     const baseClasses = "px-2 py-1 rounded text-xs font-medium";
     switch (status) {
@@ -66,7 +75,7 @@ const ApplicationsList: React.FC = () => {
         return <span className={`${baseClasses} bg-error/20 text-error`}>Rejected</span>;
     }
   };
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -74,7 +83,7 @@ const ApplicationsList: React.FC = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="bg-error/10 text-error p-4 rounded-md">
@@ -82,12 +91,11 @@ const ApplicationsList: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Whitelist Applications</h2>
-        
         <div className="flex items-center gap-2">
           <Filter size={16} />
           <select
@@ -102,7 +110,7 @@ const ApplicationsList: React.FC = () => {
           </select>
         </div>
       </div>
-      
+
       {filteredApplications.length === 0 ? (
         <div className="bg-background-light rounded-lg p-8 text-center">
           <p className="text-lg text-text-muted">No applications found</p>
@@ -110,8 +118,8 @@ const ApplicationsList: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {filteredApplications.map((application) => (
-            <div 
-              key={application.id} 
+            <div
+              key={application.id}
               className="bg-background-light rounded-lg p-4 hover:bg-opacity-80 transition-colors duration-200"
             >
               <div className="flex justify-between items-start">
@@ -120,47 +128,101 @@ const ApplicationsList: React.FC = () => {
                     {application.rpName} {application.rpSurname}
                   </h3>
                   <p className="text-text-muted">Discord ID: {application.discordId}</p>
-                  <div className="mt-2">{getStatusBadge(application.status)}</div>
+                  <div className="mt-2">{getStatusBadge(application.status as ApplicationStatus)}</div>
+                  {application.status === ApplicationStatus.REJECTED && application.rejectionReason && (
+                    <div className="mt-2 bg-error/10 text-error p-2 rounded text-sm">
+                      <strong>Raison du refus :</strong> {application.rejectionReason}
+                    </div>
+                  )}
+                  {application.status === ApplicationStatus.REJECTED && application.adminNote && (
+                    <div className="mt-1 text-xs text-muted italic">
+                      <strong>Note admin :</strong> {application.adminNote}
+                    </div>
+                  )}
                 </div>
-                
+
                 <div className="flex flex-col gap-2">
-                  <a 
-                    href={application.backgroundLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href={application.backgroundLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="btn btn-secondary py-1 text-sm"
                   >
                     <ExternalLink size={14} className="mr-1" />
                     Background
                   </a>
-                  
+
                   {application.status === ApplicationStatus.PENDING && (
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-col gap-2 mt-2">
                       <button
                         className="btn btn-success py-1 text-sm"
-                        onClick={() => handleStatusUpdate(application.id!, 'approved')}
-                        disabled={actionLoading === application.id}
+                        onClick={() => handleStatusUpdate(Number(application.id), 'approved')}
+                        disabled={actionLoading === Number(application.id)}
                       >
-                        {actionLoading === application.id ? (
+                        {actionLoading === Number(application.id) ? (
                           <Loader2 size={14} className="animate-spin" />
                         ) : (
-                          <CheckCircle size={14} className="mr-1" />
+                          <>
+                            <CheckCircle size={14} className="mr-1" />
+                            Approve
+                          </>
                         )}
-                        Approve
                       </button>
-                      
-                      <button
-                        className="btn btn-danger py-1 text-sm"
-                        onClick={() => handleStatusUpdate(application.id!, 'rejected')}
-                        disabled={actionLoading === application.id}
-                      >
-                        {actionLoading === application.id ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
+
+                      {!showRejectForm[Number(application.id)] ? (
+                        <button
+                          className="btn btn-danger py-1 text-sm"
+                          onClick={() => setShowRejectForm(prev => ({ ...prev, [Number(application.id)]: true }))}
+                        >
                           <XCircle size={14} className="mr-1" />
-                        )}
-                        Reject
-                      </button>
+                          Reject
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          <textarea
+                            className="input text-sm w-full"
+                            rows={2}
+                            placeholder="Message pour le joueur"
+                            value={rejectionReasons[Number(application.id)] || ''}
+                            onChange={(e) =>
+                              setRejectionReasons((prev) => ({ ...prev, [application.id]: e.target.value }))
+                            }
+                          />
+                          <textarea
+                            className="input text-sm w-full"
+                            rows={2}
+                            placeholder="Note admin (non visible par le joueur)"
+                            value={adminNotes[Number(application.id)] || ''}
+                            onChange={(e) =>
+                              setAdminNotes((prev) => ({ ...prev, [application.id]: e.target.value }))
+                            }
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              className="btn btn-danger py-1 text-sm"
+                              onClick={() => handleStatusUpdate(Number(application.id), 'rejected')}
+                              disabled={actionLoading === Number(application.id)}
+                            >
+                              {actionLoading === Number(application.id) ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <>
+                                  <XCircle size={14} className="mr-1" />
+                                  Confirm Reject
+                                </>
+                              )}
+                            </button>
+                            <button
+                              className="btn btn-secondary py-1 text-sm"
+                              onClick={() =>
+                                setShowRejectForm((prev) => ({ ...prev, [application.id]: false }))
+                              }
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
