@@ -61,10 +61,18 @@ export const getApplications = async (): Promise<ApiResponse<Player[]>> => {
 
 export const updateApplicationStatus = async (
   id: number,
-  status: 'approved' | 'rejected'
+  status: 'approved' | 'rejected',
+  rejectionReason?: string,
+  adminNote?: string
 ): Promise<ApiResponse<Player>> => {
   try {
-    const response = await api.patch(`/players/${id}`, { status });
+    const payload: any = { status };
+    if (status === 'rejected') {
+      payload.rejectionReason = rejectionReason;
+      payload.adminNote = adminNote;
+    }
+
+    const response = await api.patch(`/players/${id}`, payload);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -73,6 +81,7 @@ export const updateApplicationStatus = async (
     return { success: false, error: 'Unknown error occurred' };
   }
 };
+
 
 export const checkApplicationStatus = async (discordId: string): Promise<ApiResponse<Player>> => {
   try {
