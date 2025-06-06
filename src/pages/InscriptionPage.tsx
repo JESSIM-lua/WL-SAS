@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 
+interface Participant {
+  discordId: string;
+}
+
 interface Inscription {
   id: number;
   date: string;
   heure: string;
   maxPlayers: number;
-  participants: { discordId: string }[];
+  isActive: boolean;
+  participants: Participant[];
 }
 
 const InscriptionPage: React.FC = () => {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [error, setError] = useState('');
-
   const discordId = localStorage.getItem('discord_id');
 
   useEffect(() => {
@@ -74,37 +78,38 @@ const InscriptionPage: React.FC = () => {
     }
   };
 
+  const activeSessions = inscriptions.filter(s => s.isActive);
+
+  // Vérifie si l’utilisateur est déjà inscrit à une autre session active
+  const inscritAilleurs = activeSessions.some(s =>
+    s.participants.some(p => p.discordId === discordId)
+  );
+
   return (
     <div className="max-w-2xl mx-auto card p-6 space-y-4">
       <h2 className="text-xl font-bold text-center">Inscriptions ouvertes</h2>
       {error && <div className="text-red-500">{error}</div>}
 
-      {inscriptions.map((session) => {
+      {activeSessions.map(session => {
         const spotsLeft = session.maxPlayers - session.participants.length;
         const isParticipant = session.participants.some(p => p.discordId === discordId);
-        // Vérifie si l'utilisateur est inscrit à une autre session
-        const inscritAilleurs = inscriptions.some(
-          s => s.participants.some(p => p.discordId === discordId) && s.id !== session.id
-        );
 
         return (
           <div key={session.id} className="p-4 border rounded space-y-2">
-            <p>📅 <strong>Date:</strong> {session.date}</p>
-            <p>🕐 <strong>Heure:</strong> {session.heure}</p>
-            <p>👥 <strong>Places:</strong> {session.participants.length} / {session.maxPlayers}</p>
-            
+            <p>📅 <strong>Date :</strong> {session.date}</p>
+            <p>🕐 <strong>Heure :</strong> {session.heure}</p>
+            <p>👥 <strong>Places :</strong> {session.participants.length} / {session.maxPlayers}</p>
+
             {!isParticipant ? (
               <button
                 onClick={() => handleJoin(session.id)}
                 disabled={spotsLeft <= 0 || inscritAilleurs}
-                className={`btn w-full ${
-                  spotsLeft <= 0 || inscritAilleurs ? 'btn-disabled' : 'btn-primary'
-                }`}
+                className={`btn w-full ${spotsLeft <= 0 || inscritAilleurs ? 'btn-disabled' : 'btn-primary'}`}
               >
                 {spotsLeft <= 0
                   ? 'Complet'
                   : inscritAilleurs
-                    ? 'Déjà inscrit ailleurs'
+                    ? 'Déjà inscrit à une session active'
                     : 'S’inscrire'}
               </button>
             ) : (
