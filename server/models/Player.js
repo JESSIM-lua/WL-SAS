@@ -36,6 +36,19 @@ const Player = sequelize.define('Player', {
       is: /^\d{17,19}$/,
     },
   },
+  rejectionReason: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+  },
+  reapplied: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+  },
+  adminNote: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+},
+
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
     defaultValue: 'pending',
