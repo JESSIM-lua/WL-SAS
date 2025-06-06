@@ -19,6 +19,11 @@ const Inscription = sequelize.define('Inscription', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  isActive: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: true,
+},
+
 }, {
   tableName: 'Inscriptions',
 });

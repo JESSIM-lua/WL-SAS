@@ -180,6 +180,65 @@ router.post('/:id/leave', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 }
+
+
 );
+
+// ✅ Activer/désactiver une session
+router.patch('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { isActive } = req.body;
+
+  try {
+    const session = await Inscription.findByPk(id, {
+      include: [
+        {
+          model: InscriptionParticipant,
+          as: 'participants',
+        },
+      ],
+    });
+
+    if (!session) {
+      return res.status(404).json({ success: false, error: 'Session non trouvée' });
+    }
+
+    session.isActive = isActive;
+    await session.save();
+
+    // Si on désactive la session, on retire le rôle Discord aux participants
+    if (!isActive && session.participants.length > 0) {
+      const { DISCORD_BOT_TOKEN, DISCORD_GUILD_ID } = process.env;
+      const ROLE_ID = '1355515550427516969';
+
+      if (!DISCORD_BOT_TOKEN || !DISCORD_GUILD_ID) {
+        console.warn('⚠️ Token ou ID Discord manquant');
+      } else {
+        for (const participant of session.participants) {
+          try {
+            await fetch(
+              `https://discord.com/api/guilds/${DISCORD_GUILD_ID}/members/${participant.discordId}/roles/${ROLE_ID}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          } catch (err) {
+            console.error(`Erreur suppression rôle pour ${participant.discordId}:`, err);
+          }
+        }
+      }
+    }
+
+    res.json({ success: true, data: session });
+  } catch (err) {
+    console.error('Erreur changement statut session:', err);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+});
+
 
 export default router;
